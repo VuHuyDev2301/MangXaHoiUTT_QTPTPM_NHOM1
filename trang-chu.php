@@ -142,7 +142,7 @@ try {
                     <?php
                     foreach ($posts as $post):
                     ?>
-                    <div class="post" data-aos="fade-up">
+                    <div class="post" data-aos="fade-up" data-post-id="<?php echo $post['id']; ?>">
                         <div class="post-header">
                             <img src="uploads/avatars/<?php echo $post['anh_dai_dien']; ?>" 
                                  alt="Avatar" class="avatar">
@@ -179,8 +179,20 @@ try {
                             </button>
                         </div>
                         
-                        <div class="comments-section">
-                            <!-- Comments will be loaded here -->
+                        <div class="comments-section" style="display: none;">
+                            <!-- Form bình luận -->
+                            <form class="comment-form" onsubmit="return false;">
+                                <div class="comment-input-wrapper">
+                                    <img src="uploads/avatars/<?php echo $_SESSION['anh_dai_dien']; ?>" alt="Avatar" class="avatar">
+                                    <input type="text" class="comment-input" placeholder="Viết bình luận...">
+                                    <button type="submit" class="send-comment">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- Danh sách bình luận -->
+                            <div class="comments-list"></div>
                         </div>
                     </div>
                     <?php endforeach; ?>
