@@ -264,4 +264,178 @@ document.querySelectorAll('.btn-delete-post').forEach(btn => {
             alert('Có lỗi xảy ra khi xóa bài viết!');
         }
     });
+});
+
+// Xử lý chỉnh sửa bài viết
+document.querySelectorAll('.btn-edit-post').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const postId = this.dataset.postId;
+        const editModal = new bootstrap.Modal(document.getElementById('editPostModal'));
+        
+        try {
+            const response = await fetch(`xu-ly/sua-bai.php?bai_viet_id=${postId}`);
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Điền dữ liệu vào form
+                document.getElementById('edit_bai_viet_id').value = postId;
+                document.getElementById('edit_noi_dung').value = data.data.noi_dung;
+                
+                // Hiển thị ảnh hiện tại nếu có
+                const editImagePreview = document.getElementById('editImagePreview');
+                if (data.data.anh) {
+                    editImagePreview.innerHTML = `
+                        <div class="current-image">
+                            <img src="uploads/posts/${data.data.anh}" alt="Current image">
+                            <button type="button" class="remove-image" onclick="removeEditImage()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>`;
+                } else {
+                    editImagePreview.innerHTML = '';
+                }
+                
+                // Hiển thị modal
+                editModal.show();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi tải thông tin bài viết!');
+        }
+    });
+});
+
+// Preview ảnh mới khi chỉnh sửa
+document.getElementById('editPostImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editImagePreview').innerHTML = `
+                <div class="image-preview-wrapper">
+                    <img src="${e.target.result}" class="img-preview">
+                    <button type="button" class="remove-image" onclick="removeEditImage()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>`;
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Xóa ảnh khi chỉnh sửa
+function removeEditImage() {
+    document.getElementById('editPostImage').value = '';
+    document.getElementById('editImagePreview').innerHTML = '';
+}
+
+// Xử lý submit form chỉnh sửa
+document.getElementById('editPostForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const postId = formData.get('bai_viet_id');
+    const post = document.querySelector(`.post[data-post-id="${postId}"]`);
+    
+    try {
+        const response = await fetch('xu-ly/sua-bai.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Cập nhật nội dung bài viết
+            post.querySelector('.post-content p').textContent = data.data.noi_dung;
+            
+            // Cập nhật ảnh nếu có
+            const postImage = post.querySelector('.post-image');
+            if (data.data.anh) {
+                if (postImage) {
+                    postImage.src = `uploads/posts/${data.data.anh}`;
+                } else {
+                    post.querySelector('.post-content').insertAdjacentHTML(
+                        'beforeend',
+                        `<img src="uploads/posts/${data.data.anh}" alt="Post image" class="post-image">`
+                    );
+                }
+            } else if (postImage) {
+                postImage.remove();
+            }
+            
+            // Đóng modal
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editPostModal'));
+            editModal.hide();
+            
+            // Reset form
+            this.reset();
+            document.getElementById('editImagePreview').innerHTML = '';
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi cập nhật bài viết!');
+    }
+});
+
+// Xử lý chia sẻ bài viết
+document.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const post = this.closest('.post');
+        const postId = post.dataset.postId;
+        const shareModal = new bootstrap.Modal(document.getElementById('sharePostModal'));
+        
+        // Lưu ID bài viết vào form
+        document.getElementById('share_bai_viet_id').value = postId;
+        
+        // Tạo preview bài viết gốc
+        const preview = document.querySelector('.share-preview');
+        preview.innerHTML = `
+            <div class="post-content">
+                <p>${post.querySelector('.post-content p').textContent}</p>
+                ${post.querySelector('.post-image') ? 
+                    `<img src="${post.querySelector('.post-image').src}" alt="Post image">` : 
+                    ''}
+            </div>
+        `;
+        
+        shareModal.show();
+    });
+});
+
+// Xử lý submit form chia sẻ
+document.getElementById('sharePostForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('xu-ly/chia-se.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Đóng modal
+            const shareModal = bootstrap.Modal.getInstance(document.getElementById('sharePostModal'));
+            shareModal.hide();
+            
+            // Reset form
+            this.reset();
+            
+            // Reload trang để hiển thị bài viết mới
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi chia sẻ bài viết!');
+    }
 }); 

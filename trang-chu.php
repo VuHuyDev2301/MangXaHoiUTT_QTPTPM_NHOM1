@@ -15,7 +15,8 @@ try {
     $stmt = $conn->prepare("
         SELECT bv.*, nd.ho_ten, nd.anh_dai_dien,
         (SELECT COUNT(*) FROM thich WHERE bai_viet_id = bv.id) as so_luot_thich,
-        (SELECT COUNT(*) FROM binh_luan WHERE bai_viet_id = bv.id) as so_binh_luan
+        (SELECT COUNT(*) FROM binh_luan WHERE bai_viet_id = bv.id) as so_binh_luan,
+        (SELECT chia_se_id FROM bai_viet WHERE id = bv.id) as chia_se_id
         FROM bai_viet bv 
         JOIN nguoi_dung nd ON bv.nguoi_dung_id = nd.id
         ORDER BY bv.ngay_dang DESC
@@ -213,6 +214,44 @@ try {
                             <!-- Danh sách bình luận -->
                             <div class="comments-list"></div>
                         </div>
+
+                        <?php if ($post['chia_se_id']): ?>
+                            <div class="shared-post">
+                                <?php
+                                // Lấy thông tin bài viết gốc
+                                $stmt = $conn->prepare("
+                                    SELECT bv.*, nd.ho_ten, nd.anh_dai_dien 
+                                    FROM bai_viet bv 
+                                    JOIN nguoi_dung nd ON bv.nguoi_dung_id = nd.id 
+                                    WHERE bv.id = ?
+                                ");
+                                $stmt->execute([$post['chia_se_id']]);
+                                $original_post = $stmt->fetch(PDO::FETCH_ASSOC);
+                                
+                                if ($original_post):
+                                ?>
+                                    <div class="original-post">
+                                        <div class="post-header">
+                                            <img src="uploads/avatars/<?php echo $original_post['anh_dai_dien']; ?>" 
+                                                 alt="Avatar" class="avatar">
+                                            <div class="post-info">
+                                                <h6><?php echo $original_post['ho_ten']; ?></h6>
+                                                <span class="time">
+                                                    <?php echo time_elapsed_string($original_post['ngay_dang']); ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="post-content">
+                                            <p><?php echo $original_post['noi_dung']; ?></p>
+                                            <?php if ($original_post['anh']): ?>
+                                                <img src="uploads/posts/<?php echo $original_post['anh']; ?>" 
+                                                     alt="Post image" class="post-image">
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -258,6 +297,54 @@ try {
                         </div>
                         <div id="imagePreview"></div>
                         <button type="submit" class="btn btn-primary w-100">Đăng bài</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <div class="modal fade" id="editPostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa bài viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPostForm" enctype="multipart/form-data">
+                        <input type="hidden" name="bai_viet_id" id="edit_bai_viet_id">
+                        <textarea name="noi_dung" id="edit_noi_dung" placeholder="Nội dung bài viết" required></textarea>
+                        <div class="image-upload">
+                            <label for="editPostImage">
+                                <i class="fas fa-image"></i> Thay đổi ảnh
+                            </label>
+                            <input type="file" id="editPostImage" name="anh" accept="image/*">
+                        </div>
+                        <div id="editImagePreview"></div>
+                        <button type="submit" class="btn btn-primary w-100">Cập nhật</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Post Modal -->
+    <div class="modal fade" id="sharePostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chia sẻ bài viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sharePostForm">
+                        <input type="hidden" name="bai_viet_id" id="share_bai_viet_id">
+                        <div class="share-preview">
+                            <!-- Bài viết gốc sẽ được hiển thị ở đây -->
+                        </div>
+                        <textarea name="noi_dung" placeholder="Viết gì đó..." class="form-control mb-3"></textarea>
+                        <button type="submit" class="btn btn-primary w-100">Chia sẻ ngay</button>
                     </form>
                 </div>
             </div>

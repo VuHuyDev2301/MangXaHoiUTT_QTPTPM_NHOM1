@@ -23,7 +23,9 @@ CREATE TABLE bai_viet (
     noi_dung TEXT,
     anh VARCHAR(255),
     ngay_dang DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE
+    chia_se_id INT NULL,
+    FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE,
+    FOREIGN KEY (chia_se_id) REFERENCES bai_viet(id) ON DELETE CASCADE
 );
 
 -- Bảng bình luận
