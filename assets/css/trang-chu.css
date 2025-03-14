@@ -263,6 +263,7 @@ body {
     display: flex;
     align-items: center;
     margin-bottom: 15px;
+    position: relative;
 }
 
 .post-header .avatar {
@@ -577,4 +578,48 @@ body {
     .comment-content {
         padding: 10px 12px;
     }
+}
+
+.post-actions-dropdown {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+.btn-more {
+    background: none;
+    border: none;
+    color: #65676b;
+    padding: 5px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.btn-more:hover {
+    background: #f0f2f5;
+}
+
+.dropdown-menu {
+    min-width: 180px;
+    padding: 8px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    color: #050505;
+    font-size: 14px;
+}
+
+.dropdown-item i {
+    margin-right: 10px;
+    width: 16px;
+}
+
+.dropdown-item.btn-delete-post {
+    color: #dc3545;
+}
+
+.dropdown-item:hover {
+    background: #f0f2f5;
 } 

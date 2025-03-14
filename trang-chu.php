@@ -152,6 +152,25 @@ try {
                                     <?php echo time_elapsed_string($post['ngay_dang']); ?>
                                 </span>
                             </div>
+                            <?php if ($post['nguoi_dung_id'] == $_SESSION['user_id']): ?>
+                            <div class="post-actions-dropdown">
+                                <button class="btn-more" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button class="dropdown-item btn-delete-post" data-post-id="<?php echo $post['id']; ?>">
+                                            <i class="fas fa-trash-alt"></i> Xóa bài viết
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item btn-edit-post" data-post-id="<?php echo $post['id']; ?>">
+                                            <i class="fas fa-edit"></i> Chỉnh sửa
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="post-content">

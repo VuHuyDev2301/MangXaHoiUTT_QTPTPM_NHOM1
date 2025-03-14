@@ -1,7 +1,8 @@
 // Thêm hàm time_elapsed_string
 function time_elapsed_string(datetime) {
     const now = new Date();
-    const past = new Date(datetime);
+    // Chuyển đổi datetime string thành đối tượng Date
+    const past = new Date(datetime.replace(' ', 'T') + '+07:00');
     const diff = Math.floor((now - past) / 1000);
 
     if (diff < 60) {
@@ -230,4 +231,37 @@ document.querySelector('.action-btn:first-child').addEventListener('click', func
     setTimeout(() => {
         document.getElementById('postImage').click();
     }, 500);
+});
+
+// Xử lý xóa bài viết
+document.querySelectorAll('.btn-delete-post').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if (!confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+        
+        const postId = this.dataset.postId;
+        const post = this.closest('.post');
+        
+        try {
+            const response = await fetch('xu-ly/xoa-bai.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `bai_viet_id=${postId}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Xóa bài viết khỏi DOM với animation
+                post.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => post.remove(), 300);
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa bài viết!');
+        }
+    });
 }); 
