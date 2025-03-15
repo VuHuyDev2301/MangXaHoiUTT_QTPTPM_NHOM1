@@ -36,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $chu_bai_viet = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($chu_bai_viet['nguoi_dung_id'] != $nguoi_dung_id) {
-                $stmt = $conn->prepare("INSERT INTO thong_bao (nguoi_dung_id, loai, noi_dung, lien_ket_id, ngay_tao) 
-                                      VALUES (?, 'thich', ?, ?, NOW())");
+                $stmt = $conn->prepare("INSERT INTO thong_bao (nguoi_dung_id, loai, noi_dung, lien_ket_id, ngay_tao, da_doc) 
+                                      VALUES (?, 'thich', ?, ?, NOW(), 0)");
                 $stmt->execute([
                     $chu_bai_viet['nguoi_dung_id'],
                     $_SESSION['ho_ten'] . ' đã thích bài viết của bạn',

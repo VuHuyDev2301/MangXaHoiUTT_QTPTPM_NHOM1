@@ -26,6 +26,15 @@ try {
 } catch(PDOException $e) {
     echo "Lỗi: " . $e->getMessage();
 }
+
+// Lấy số lượng lời mời kết bạn
+$stmt = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM ket_ban 
+    WHERE nguoi_nhan_id = ? AND trang_thai = 'cho_duyet'
+");
+$stmt->execute([$_SESSION['user_id']]);
+$loi_moi_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 ?>
 
 <!DOCTYPE html>
@@ -40,76 +49,14 @@ try {
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="assets/images/logo.png" alt="UTT Social" height="40">
-            </a>
-            
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Tìm kiếm...">
-            </div>
-
-            <div class="nav-right">
-                <div class="nav-user">
-                    <img src="uploads/avatars/<?php echo $_SESSION['anh_dai_dien'] ?? 'default.jpg'; ?>" 
-                         alt="Avatar" class="avatar">
-                    <span class="username"><?php echo $_SESSION['ho_ten']; ?></span>
-                </div>
-                
-                <div class="nav-notifications">
-                    <div class="icon-badge-container">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
-                </div>
-                
-                <div class="nav-messages">
-                    <div class="icon-badge-container">
-                        <i class="fas fa-envelope"></i>
-                        <span class="badge">5</span>
-                    </div>
-                </div>
-                
-                <a href="xu-ly/dang-xuat.php" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <!-- Main Content -->
     <div class="container main-container">
         <div class="row">
             <!-- Left Sidebar -->
             <div class="col-md-3">
-                <div class="sidebar left-sidebar">
-                    <div class="user-profile">
-                        <img src="uploads/avatars/<?php echo $_SESSION['anh_dai_dien'] ?? 'default.jpg'; ?>" 
-                             alt="Profile" class="profile-image">
-                        <h4><?php echo $_SESSION['ho_ten']; ?></h4>
-                        <p>Sinh viên UTT</p>
-                    </div>
-                    
-                    <ul class="sidebar-menu">
-                        <li class="active">
-                            <a href="#"><i class="fas fa-home"></i> Trang chủ</a>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fas fa-user-friends"></i> Bạn bè</a>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fas fa-images"></i> Ảnh</a>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fas fa-calendar-alt"></i> Sự kiện</a>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fas fa-cog"></i> Cài đặt</a>
-                        </li>
-                    </ul>
-                </div>
+                <?php include 'includes/sidebar.php'; ?>
             </div>
 
             <!-- Main Feed -->
@@ -143,7 +90,7 @@ try {
                     <?php
                     foreach ($posts as $post):
                     ?>
-                    <div class="post" data-aos="fade-up" data-post-id="<?php echo $post['id']; ?>">
+                    <div class="post" data-aos="fade-up" data-post-id="<?php echo $post['id']; ?>" id="post-<?php echo $post['id']; ?>">
                         <div class="post-header">
                             <img src="uploads/avatars/<?php echo $post['anh_dai_dien']; ?>" 
                                  alt="Avatar" class="avatar">
@@ -191,28 +138,29 @@ try {
                             <button class="action-btn like-btn" data-post-id="<?php echo $post['id']; ?>">
                                 <i class="far fa-heart"></i> Thích
                             </button>
-                            <button class="action-btn comment-btn">
+                            <button class="action-btn comment-btn" data-post-id="<?php echo $post['id']; ?>">
                                 <i class="far fa-comment"></i> Bình luận
                             </button>
-                            <button class="action-btn share-btn">
+                            <button class="action-btn share-btn" data-post-id="<?php echo $post['id']; ?>">
                                 <i class="far fa-share-square"></i> Chia sẻ
                             </button>
                         </div>
                         
-                        <div class="comments-section" style="display: none;">
-                            <!-- Form bình luận -->
-                            <form class="comment-form" onsubmit="return false;">
-                                <div class="comment-input-wrapper">
+                        <div class="post-comments">
+                            <div class="comments-container" style="display: none;">
+                                <!-- Hiển thị bình luận -->
+                                <div class="comments-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải bình luận...
+                                </div>
+                                <div class="comments-list"></div>
+                            </div>
+                            <form class="comment-form" data-post-id="<?php echo $post['id']; ?>">
+                                <div class="input-group">
                                     <img src="uploads/avatars/<?php echo $_SESSION['anh_dai_dien']; ?>" alt="Avatar" class="avatar">
-                                    <input type="text" class="comment-input" placeholder="Viết bình luận...">
-                                    <button type="submit" class="send-comment">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
+                                    <input type="text" name="noi_dung" class="form-control comment-input" placeholder="Viết bình luận...">
+                                    <button type="submit" class="btn btn-primary">Gửi</button>
                                 </div>
                             </form>
-                            
-                            <!-- Danh sách bình luận -->
-                            <div class="comments-list"></div>
                         </div>
 
                         <?php if ($post['chia_se_id']): ?>

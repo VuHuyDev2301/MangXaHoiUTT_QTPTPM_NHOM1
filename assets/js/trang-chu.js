@@ -1,30 +1,26 @@
+// Thêm vào đầu file
+console.log('Trang-chu.js đã được tải');
+
 // Thêm hàm time_elapsed_string
 function time_elapsed_string(datetime) {
     const now = new Date();
-    // Chuyển đổi datetime string thành đối tượng Date
-    const past = new Date(datetime.replace(' ', 'T') + '+07:00');
+    const past = new Date(datetime);
     const diff = Math.floor((now - past) / 1000);
-
+    
     if (diff < 60) {
         return 'Vừa xong';
     } else if (diff < 3600) {
         const minutes = Math.floor(diff / 60);
-        return `${minutes} phút trước`;
+        return minutes + ' phút trước';
     } else if (diff < 86400) {
         const hours = Math.floor(diff / 3600);
-        return `${hours} giờ trước`;
+        return hours + ' giờ trước';
     } else if (diff < 604800) {
         const days = Math.floor(diff / 86400);
-        return `${days} ngày trước`;
-    } else if (diff < 2592000) {
-        const weeks = Math.floor(diff / 604800);
-        return `${weeks} tuần trước`;
-    } else if (diff < 31536000) {
-        const months = Math.floor(diff / 2592000);
-        return `${months} tháng trước`;
+        return days + ' ngày trước';
     } else {
-        const years = Math.floor(diff / 31536000);
-        return `${years} năm trước`;
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return past.toLocaleDateString('vi-VN', options);
     }
 }
 
@@ -128,21 +124,28 @@ document.querySelectorAll('.like-btn').forEach(btn => {
     });
 });
 
-// Xử lý bình luận
+// Xử lý hiển thị bình luận
 document.querySelectorAll('.comment-btn').forEach(btn => {
     btn.addEventListener('click', async function() {
-        const post = this.closest('.post');
-        const commentsSection = post.querySelector('.comments-section');
-        const commentsList = commentsSection.querySelector('.comments-list');
+        const postId = this.dataset.postId;
+        const post = document.querySelector(`.post[data-post-id="${postId}"]`);
+        const commentsContainer = post.querySelector('.comments-container');
+        const commentsList = post.querySelector('.comments-list');
         
-        if (commentsSection.style.display === 'none') {
+        // Toggle hiển thị container bình luận
+        if (commentsContainer.style.display === 'none') {
+            commentsContainer.style.display = 'block';
+            
             // Hiển thị loading
-            commentsList.innerHTML = '<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải bình luận...</p>';
-            commentsSection.style.display = 'block';
+            commentsList.innerHTML = '';
+            post.querySelector('.comments-loading').style.display = 'block';
             
             try {
-                const response = await fetch(`xu-ly/binh-luan.php?bai_viet_id=${post.dataset.postId}`);
+                const response = await fetch(`xu-ly/binh-luan.php?bai_viet_id=${postId}`);
                 const data = await response.json();
+                
+                // Ẩn loading
+                post.querySelector('.comments-loading').style.display = 'none';
                 
                 if (data.status === 'success') {
                     if (data.comments.length > 0) {
@@ -150,9 +153,11 @@ document.querySelectorAll('.comment-btn').forEach(btn => {
                             <div class="comment">
                                 <img src="uploads/avatars/${comment.anh_dai_dien}" alt="Avatar" class="avatar">
                                 <div class="comment-content">
-                                    <h6>${comment.ho_ten}</h6>
+                                    <div class="comment-header">
+                                        <span class="comment-author">${comment.ho_ten}</span>
+                                        <span class="comment-time">${time_elapsed_string(comment.ngay_binh_luan)}</span>
+                                    </div>
                                     <p>${comment.noi_dung}</p>
-                                    <small>${time_elapsed_string(comment.ngay_binh_luan)}</small>
                                 </div>
                             </div>
                         `).join('');
@@ -163,61 +168,103 @@ document.querySelectorAll('.comment-btn').forEach(btn => {
                     commentsList.innerHTML = '<p class="text-center text-danger">Không thể tải bình luận</p>';
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Lỗi:', error);
+                post.querySelector('.comments-loading').style.display = 'none';
                 commentsList.innerHTML = '<p class="text-center text-danger">Có lỗi xảy ra khi tải bình luận</p>';
             }
         } else {
-            commentsSection.style.display = 'none';
+            commentsContainer.style.display = 'none';
         }
     });
 });
 
 // Xử lý gửi bình luận
-document.querySelectorAll('.comment-form').forEach(form => {
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const post = this.closest('.post');
-        const input = this.querySelector('.comment-input');
-        const commentsList = post.querySelector('.comments-list');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Đang thiết lập xử lý bình luận...');
+    
+    document.querySelectorAll('.comment-form').forEach(form => {
+        console.log('Tìm thấy form bình luận:', form);
         
-        if (!input.value.trim()) return;
-        
-        try {
-            const response = await fetch('xu-ly/binh-luan.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `bai_viet_id=${post.dataset.postId}&noi_dung=${encodeURIComponent(input.value)}`
-            });
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Form bình luận được submit');
             
-            const data = await response.json();
+            const postId = this.dataset.postId;
+            const commentInput = this.querySelector('input[name="noi_dung"]');
+            const commentText = commentInput.value.trim();
             
-            if (data.status === 'success') {
-                // Thêm bình luận mới vào đầu danh sách
-                const commentHTML = `
-                    <div class="comment">
-                        <img src="uploads/avatars/${data.comment.anh_dai_dien}" alt="Avatar" class="avatar">
-                        <div class="comment-content">
-                            <h6>${data.comment.ho_ten}</h6>
-                            <p>${data.comment.noi_dung}</p>
-                            <small>${time_elapsed_string(data.comment.ngay_binh_luan)}</small>
-                        </div>
-                    </div>
-                `;
-                commentsList.insertAdjacentHTML('afterbegin', commentHTML);
-                
-                // Reset input
-                input.value = '';
-                
-                // Cập nhật số lượng bình luận
-                const commentCount = post.querySelector('.post-stats span:last-child');
-                const currentCount = parseInt(commentCount.textContent.match(/\d+/)[0]);
-                commentCount.innerHTML = `<i class="fas fa-comment"></i> ${currentCount + 1}`;
+            console.log('Bài viết ID:', postId);
+            console.log('Nội dung bình luận:', commentText);
+            
+            if (!commentText) {
+                console.log('Nội dung bình luận trống');
+                return;
             }
-        } catch (error) {
-            console.error('Error:', error);
-        }
+            
+            const formData = new FormData();
+            formData.append('bai_viet_id', postId);
+            formData.append('noi_dung', commentText);
+            
+            try {
+                console.log('Gửi request bình luận...');
+                const response = await fetch('xu-ly/binh-luan.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                console.log('Kết quả bình luận:', data);
+                
+                if (data.status === 'success') {
+                    // Hiển thị container bình luận nếu đang ẩn
+                    const commentsContainer = document.querySelector(`.post[data-post-id="${postId}"] .comments-container`);
+                    if (commentsContainer.style.display === 'none') {
+                        commentsContainer.style.display = 'block';
+                    }
+                    
+                    // Thêm bình luận mới vào DOM
+                    const commentsList = document.querySelector(`.post[data-post-id="${postId}"] .comments-list`);
+                    
+                    const commentHtml = `
+                        <div class="comment">
+                            <img src="uploads/avatars/${data.comment.anh_dai_dien}" alt="Avatar" class="avatar">
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <span class="comment-author">${data.comment.ho_ten}</span>
+                                    <span class="comment-time">Vừa xong</span>
+                                </div>
+                                <p>${data.comment.noi_dung}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Thêm vào đầu danh sách
+                    if (commentsList.querySelector('.text-muted')) {
+                        // Nếu chưa có bình luận nào, xóa thông báo
+                        commentsList.innerHTML = '';
+                    }
+                    commentsList.insertAdjacentHTML('afterbegin', commentHtml);
+                    
+                    // Reset input
+                    commentInput.value = '';
+                    
+                    // Cập nhật số lượng bình luận
+                    const commentCount = document.querySelector(`.post[data-post-id="${postId}"] .comment-count`);
+                    if (commentCount) {
+                        const currentCount = parseInt(commentCount.textContent);
+                        commentCount.textContent = currentCount + 1;
+                    }
+                    
+                    // Cập nhật thông báo
+                    loadNotifications();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi bình luận');
+                }
+            } catch (error) {
+                console.error('Lỗi khi bình luận:', error);
+                alert('Có lỗi xảy ra khi bình luận!');
+            }
+        });
     });
 });
 
@@ -438,4 +485,120 @@ document.getElementById('sharePostForm').addEventListener('submit', async functi
         console.error('Error:', error);
         alert('Có lỗi xảy ra khi chia sẻ bài viết!');
     }
+});
+
+// Xử lý thông báo
+function loadNotifications() {
+    console.log('Đang tải thông báo...');
+    fetch('xu-ly/thong-bao.php?action=get_thong_bao')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dữ liệu thông báo:', data);
+            if (data.status === 'success') {
+                updateNotificationBadge(data.chua_doc);
+                renderNotifications(data.thong_bao);
+            }
+        })
+        .catch(error => console.error('Lỗi khi tải thông báo:', error));
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.querySelector('.notification-count');
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function renderNotifications(notifications) {
+    const container = document.querySelector('.notifications-list');
+    
+    if (!notifications || notifications.length === 0) {
+        container.innerHTML = `
+            <div class="no-notifications">
+                <p>Không có thông báo mới</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    notifications.forEach(notification => {
+        const isUnread = notification.da_doc == 0 ? 'unread' : '';
+        const time = time_elapsed_string(notification.ngay_tao);
+        
+        html += `
+            <div class="notification-item ${isUnread}" 
+                 data-id="${notification.id}" 
+                 data-type="${notification.loai}" 
+                 data-link="${notification.lien_ket_id}">
+                <img src="uploads/avatars/${notification.anh_dai_dien || 'default.jpg'}" alt="Avatar" class="notification-avatar">
+                <div class="notification-content">
+                    <p class="notification-text">${notification.noi_dung}</p>
+                    <span class="notification-time">${time}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Thêm event listener cho các thông báo
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const type = this.dataset.type;
+            const linkId = this.dataset.link;
+            
+            // Đánh dấu đã đọc
+            markAsRead(id);
+            
+            // Xử lý chuyển hướng dựa vào loại thông báo
+            if (type === 'ket_ban') {
+                // Chuyển đến trang bạn bè
+                window.location.href = 'ban-be.php';
+            } else if (type === 'binh_luan' || type === 'thich') {
+                // Chuyển đến bài viết
+                window.location.href = `trang-chu.php#post-${linkId}`;
+            } else if (type === 'tin_nhan') {
+                // Chuyển đến tin nhắn (nếu có)
+                window.location.href = `tin-nhan.php?id=${linkId}`;
+            }
+        });
+    });
+}
+
+function markAsRead(id) {
+    const formData = new FormData();
+    formData.append('action', 'danh_dau_da_doc');
+    if (id) formData.append('thong_bao_id', id);
+    
+    fetch('xu-ly/thong-bao.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadNotifications();
+        }
+    })
+    .catch(error => console.error('Lỗi:', error));
+}
+
+// Đánh dấu tất cả đã đọc
+document.querySelector('.mark-all-read').addEventListener('click', function() {
+    markAsRead();
+});
+
+// Load thông báo khi trang được tải
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Trang đã tải xong, đang tải thông báo...');
+    loadNotifications();
+    
+    // Cập nhật thông báo mỗi 30 giây
+    setInterval(loadNotifications, 30000);
 }); 

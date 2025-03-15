@@ -157,13 +157,14 @@ body {
 }
 
 .sidebar-menu a {
+    position: relative;
     display: flex;
     align-items: center;
-    padding: 10px;
-    border-radius: 5px;
-    color: var(--text-color);
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: #1c1e21;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
 }
 
 .sidebar-menu a i {
@@ -180,6 +181,15 @@ body {
 .sidebar-menu li.active a {
     background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
     color: var(--white);
+}
+
+.sidebar-menu .badge {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    padding: 3px 6px;
 }
 
 /* Post Styles */
@@ -693,4 +703,229 @@ body {
     border-radius: 8px;
     padding: 12px;
     resize: vertical;
+}
+
+/* Cải thiện hiển thị badge trong navbar và sidebar */
+.nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #1c1e21;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    margin-right: 5px;
+}
+
+.nav-link .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 50%;
+    background-color: #f03e3e;
+    color: white;
+    transform: translate(25%, -25%);
+}
+
+/* Thêm CSS cho thông báo */
+.notifications-dropdown {
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #ebedf0;
+}
+
+.notifications-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.mark-all-read {
+    font-size: 12px;
+    color: #1877f2;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.notification-item {
+    display: flex;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.notification-item:hover {
+    background-color: #f0f2f5;
+}
+
+.notification-item.unread .notification-text {
+    font-weight: bold;
+    color: #1c1e21;
+}
+
+.notification-item:not(.unread) .notification-text {
+    color: #65676b;
+}
+
+.notification-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-text {
+    margin: 0 0 5px;
+    font-size: 14px;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: #65676b;
+}
+
+.notification-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #1877f2;
+    border-radius: 50%;
+    margin-left: 10px;
+    align-self: center;
+}
+
+.notification-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    background-color: #f03e3e;
+    color: white;
+    transform: translate(25%, -25%);
+}
+
+.no-notifications {
+    padding: 20px;
+    text-align: center;
+    color: #65676b;
+}
+
+/* Styles cho phần bình luận */
+.post-comments {
+    margin-top: 10px;
+}
+
+.comments-container {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.comments-loading {
+    text-align: center;
+    padding: 10px;
+    color: #6c757d;
+}
+
+.comments-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.comment {
+    display: flex;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.comment:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.comment .avatar {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+}
+
+.comment-content {
+    flex: 1;
+    background-color: #fff;
+    padding: 8px 12px;
+    border-radius: 18px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #1c1e21;
+}
+
+.comment-time {
+    font-size: 12px;
+    color: #65676b;
+}
+
+.comment-content p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.comment-form {
+    margin-top: 10px;
+}
+
+.comment-form .input-group {
+    display: flex;
+    align-items: center;
+}
+
+.comment-form .avatar {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+}
+
+.comment-input {
+    flex: 1;
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+}
+
+.comment-form button {
+    margin-left: 10px;
+    border-radius: 20px;
+    padding: 5px 15px;
 } 
