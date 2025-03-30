@@ -46,6 +46,8 @@ $loi_moi_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/trang-chu.css">
+    <link rel="stylesheet" href="assets/css/chat.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
 </head>
 <body>
     <!-- Navbar -->
@@ -210,17 +212,32 @@ $loi_moi_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
                 <div class="sidebar right-sidebar">
                     <div class="section-title">
                         <h5>Bạn bè trực tuyến</h5>
+                        <?php
+                        // Lấy danh sách bạn bè trực tuyến
+                        $stmt = $conn->prepare("
+                            SELECT DISTINCT nd.id, nd.ho_ten, nd.anh_dai_dien 
+                            FROM nguoi_dung nd
+                            JOIN ban_be bb ON nd.id = bb.ban_be_id
+                            WHERE bb.nguoi_dung_id = ? AND nd.trang_thai = 'hoat_dong'
+                        ");
+                        $stmt->execute([$_SESSION['user_id']]);
+                        $online_friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        foreach ($online_friends as $friend):
+                        ?>
+                            <a class="friend" data-friend-id="<?php echo $friend['id']; ?>">
+                                <img src="uploads/avatars/<?php echo $friend['anh_dai_dien']; ?>" alt="Avatar" class="avatar">
+                                <span><?php echo $friend['ho_ten']; ?></span>
+                            </a>
+                        <?php
+                        endforeach;
+                        ?>
                     </div>
-                    <div class="online-friends">
-                        <!-- Online friends will be loaded here -->
-                    </div>
-                    
-                    <div class="section-title">
+                    <!-- <div class="section-title">
                         <h5>Lời mời kết bạn</h5>
                     </div>
                     <div class="friend-requests">
-                        <!-- Friend requests will be loaded here -->
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -298,9 +315,61 @@ $loi_moi_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             </div>
         </div>
     </div>
+<!------------------------------------------------ Chat Area ---------------------------------------------------->
+<section class="chatbot-body">
+    <!-- Phần hiển thị Chatbot mẫu (ví dụ khi chưa mở chat) -->
+    <div class="chatbot-popup">
+        <!-- ChatBot Header -->
+        <div class="chat-header">
+            <!-- <div class="header-info">
+            <svg class="chatbot-logo" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1024 1024">
+                    <path d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z"></path>
+                </svg>
+                <h2 class="logo-text">ChatBot</h2>
+            </div> -->
+            <button id="close-chatbot" class="material-symbols-rounded">
+                keyboard_arrow_down
+            </button>
+        </div>
 
+        <!-- ChatBot Body -->
+        <div class="chat-body">
+            <div class="message bot-message">
+                <svg class="bot-avatar" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1024 1024">
+                    <path d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z"></path>
+                </svg>
+                <div class="message-text">
+                    Hey there 👋 <br> How can I help you today?
+                </div> 
+            </div>
+        </div>
+
+        <!-- Chat Footer -->
+        <div class="chat-footer">
+            <form action="#" class="chat-form">
+                <textarea placeholder="Message..." class="message-input" required></textarea>
+                <div class="chat-controls">
+                    <div class="file-upload-wrapper">
+                        <input type="file" accept="./uploads/avatars/*" id="file-input" hidden>
+                        <img src="#">
+                        <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
+                        <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
+                    </div>
+                    <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Phần chứa nhiều cửa sổ chat được tạo động -->
+    <div id="chat-container"></div>
+</section>
+
+</body>
+   
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
     <script src="assets/js/trang-chu.js"></script>
+    <script src="assets/js/chat-event.js"></script>
 </body>
 </html> 

@@ -9,7 +9,7 @@ if (isset($_SESSION['user_id'])) {
 
     try {
         // Cập nhật trạng thái offline
-        $stmt = $conn->prepare("UPDATE nguoi_dung SET trang_thai = 'offline' WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE nguoi_dung SET trang_thai = 'khong-hoat-dong' WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         
         // Xóa session

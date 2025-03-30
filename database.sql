@@ -83,3 +83,27 @@ CREATE TABLE thong_bao (
     ngay_tao DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE
 ); 
+
+CREATE TABLE `ban_be` (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `nguoi_dung_id` INT NOT NULL,
+    `ban_be_id` INT NOT NULL,
+    FOREIGN KEY (`nguoi_dung_id`) REFERENCES `nguoi_dung`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`ban_be_id`) REFERENCES `nguoi_dung`(`id`) ON DELETE CASCADE
+);ALTER TABLE `ban_be` ADD `tin_nhan` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_vietnamese_ci NOT NULL AFTER `ban_be_id`;
+ ALTER TABLE `ban_be` 
+ADD `trang_thai` ENUM('da_xem', 'chua_xem', 'dang_gui', 'da_gui') NOT NULL DEFAULT 'chua_xem' AFTER `tin_nhan`,
+ADD `thoi_gian` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `trang_thai`;
+
+DELIMITER //
+
+CREATE TRIGGER `them_ban_be` AFTER UPDATE ON `ket_ban`
+FOR EACH ROW
+BEGIN
+    IF NEW.trang_thai = 'da_dong_y' THEN
+        INSERT INTO `ban_be` (`nguoi_dung_id`, `ban_be_id`) VALUES (NEW.nguoi_gui_id, NEW.nguoi_nhan_id);
+        INSERT INTO `ban_be` (`nguoi_dung_id`, `ban_be_id`) VALUES (NEW.nguoi_nhan_id, NEW.nguoi_gui_id);
+    END IF;
+END //
+
+DELIMITER ;

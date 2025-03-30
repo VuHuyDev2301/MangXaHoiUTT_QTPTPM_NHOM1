@@ -18,6 +18,13 @@
                     <span class="badge bg-danger"><?php echo $loi_moi_count; ?></span>
                     <?php endif; ?>
                 </a>
+                <a href="messenger.php" class="nav-link">
+                    <i class="fas fa-comment-alt"></i>
+                    <span class="nav-text">Tin nhắn</span>
+                    <?php if (isset($loi_moi_count) && $loi_moi_count > 0): ?>
+                    <span class="badge bg-danger"><?php echo $loi_moi_count; ?></span>
+                    <?php endif; ?>
+                </a>
                 
                 <div class="dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">

@@ -58,3 +58,25 @@ INSERT INTO thong_bao (nguoi_dung_id, loai, noi_dung, da_doc, lien_ket_id, ngay_
 (3, 'ket_ban', 'Phạm Thị D đã gửi lời mời kết bạn', true, 4, '2024-03-12 16:30:00'),
 (4, 'tin_nhan', 'Bạn có tin nhắn mới từ Phạm Thị D', false, 5, '2024-03-15 10:05:00'),
 (5, 'thich', 'Nguyễn Văn A đã thích bài viết của bạn', true, 5, '2024-03-13 10:35:00'); 
+
+INSERT INTO `ban_be` (`nguoi_dung_id`, `ban_be_id`, `tin_nhan`, `trang_thai`, `thoi_gian`) VALUES
+(1, 2, 'Xin chào, bạn khỏe không?', 'da_gui', '2025-03-25 08:00:00'),
+(2, 1, 'Tôi khỏe, còn bạn?', 'da_xem', '2025-03-25 08:01:00'),
+(3, 4, 'Bạn có rảnh không?', 'chua_xem', '2025-03-25 08:02:00'),
+(4, 3, 'Có chuyện gì vậy?', 'da_gui', '2025-03-25 08:03:00'),
+(5, 6, 'Chúc bạn một ngày tốt lành!', 'dang_gui', '2025-03-25 08:04:00'),
+(6, 5, 'Cảm ơn bạn!', 'da_gui', '2025-03-25 08:05:00'),
+(7, 8, 'Đi cà phê không?', 'chua_xem', '2025-03-25 08:06:00'),
+(8, 7, 'Tối nay nhé!', 'da_gui', '2025-03-25 08:07:00'),
+(9, 10, 'Hôm nay bạn thế nào?', 'dang_gui', '2025-03-25 08:08:00'),
+(10, 9, 'Cũng ổn, cảm ơn bạn!', 'da_gui', '2025-03-25 08:09:00'),
+(1, 3, 'Học bài chưa?', 'da_xem', '2025-03-25 08:10:00'),
+(3, 1, 'Vẫn đang học đây!', 'da_gui', '2025-03-25 08:11:00'),
+(2, 4, 'Hôm nay làm gì?', 'chua_xem', '2025-03-25 08:12:00'),
+(4, 2, 'Đi làm như bình thường.', 'da_gui', '2025-03-25 08:13:00'),
+(5, 7, 'Có muốn đi chơi không?', 'da_xem', '2025-03-25 08:14:00'),
+(7, 5, 'Tối mai nhé!', 'da_gui', '2025-03-25 08:15:00'),
+(6, 8, 'Gửi file giúp mình nhé!', 'chua_xem', '2025-03-25 08:16:00'),
+(8, 6, 'Ok, để mình gửi.', 'da_gui', '2025-03-25 08:17:00'),
+(9, 1, 'Có rảnh không?', 'dang_gui', '2025-03-25 08:18:00'),
+(1, 9, 'Bận xíu, lát nữa mình nhắn lại.', 'da_gui', '2025-03-25 08:19:00');
