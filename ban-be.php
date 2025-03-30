@@ -208,8 +208,8 @@ try {
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Tải thư viện Bootstrap 5.1.3 từ CDN, bao gồm Bootstrap JS và Popper.js để hỗ trợ các tính năng động như dropdown, modal, tooltip -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> 
     <script src="assets/js/ban-be.js"></script>
 </body>
 </html> 
