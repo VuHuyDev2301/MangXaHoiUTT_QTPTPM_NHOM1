@@ -31,28 +31,80 @@ $conn = $db->getConnection();
                 <img src="assets/images/logo.png" alt="UTT Social" height="40">
             </a>
             <div class="search-box-msg">
-                <input type="text" placeholder="Search messages...">
-                <i class="fas fa-search"></i>
+            <input type="text" id="search_friend" placeholder="Search messages..." oninput="searchFriend(this.value)">
+            <i class="fas fa-search"></i>
             </div>
-            <div class="friend-list">
+
+            <div id="searchResults">
                 <?php
-                $stmt = $conn->prepare("SELECT * FROM nguoi_dung WHERE id != :user_id");
-                $stmt->execute(['user_id' => $_SESSION['user_id']]);
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $userId = $_SESSION['user_id'];
+
+                // Truy vấn danh sách bạn bè có tin nhắn gần nhất
+                $stmt = $conn->prepare("
+                    SELECT nd.id, nd.ho_ten, nd.anh_dai_dien, 
+                        (SELECT tin_nhan FROM ban_be 
+                            WHERE (nguoi_dung_id = nd.id AND ban_be_id = :user_id) 
+                            OR (ban_be_id = nd.id AND nguoi_dung_id = :user_id) 
+                            ORDER BY thoi_gian DESC LIMIT 1) AS lastMessage
+                    FROM nguoi_dung nd
+                    ORDER BY nd.ho_ten ASC
+                ");
+
+                $stmt->execute(['user_id' => $userId]);
+                $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if ($friends) {
+                    foreach ($friends as $row) {
+                        $lastMessage = $row['lastMessage'] ? htmlspecialchars($row['lastMessage']) : "Không có tin nhắn";
+                        echo "<div class='friend' data-friend-id='{$row['id']}'>
+                                <img src='uploads/avatars/{$row['anh_dai_dien']}' alt='Avatar'>
+                                <div class='friend-info'>
+                                    <span class='friend-name'>{$row['ho_ten']}</span>
+                                    <span class='last-message'>{$lastMessage}</span>
+                                </div>
+                            </div>";
+                    }
+                } else {
+                    echo "<p>Không tìm thấy bạn bè nào.</p>";
+                }
+                ?>
+            </div>
+
+            <script>
+            function searchFriend(keyword) {
+                let friends = document.querySelectorAll('.friend');
+                keyword = keyword.toLowerCase();
+
+                friends.forEach(friend => {
+                    let name = friend.querySelector('.friend-name').textContent.toLowerCase();
+                    friend.style.display = name.includes(keyword) ? "block" : "none";
+                });
+            }
+            </script>
+
+            
+            <div class="friend-list">
+            <?php
+            $stmt = $conn->prepare("SELECT * FROM nguoi_dung WHERE id != :user_id");
+            $stmt->execute(['user_id' => $_SESSION['user_id']]);
+            $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($friends)) {
+                foreach ($friends as $row) {
                     $lastMsgStmt = $conn->prepare(
                         "SELECT tin_nhan 
                         FROM ban_be
                         WHERE (nguoi_dung_id = :user_id AND ban_be_id = :friend_id)
                         OR (ban_be_id = :friend_id AND nguoi_dung_id = :user_id)
-                        ORDER BY id DESC"
+                        ORDER BY id DESC LIMIT 1"
                     );
                     $lastMsgStmt->execute([
                         'user_id' => $_SESSION['user_id'],
                         'friend_id' => $row['id']
                     ]);
                     $lastMsg = $lastMsgStmt->fetch();
-                    $lastMessage = $lastMsg ? htmlspecialchars(substr($lastMsg['tin_nhan'], 0, 30)) . '...' : 'No messages yet';
-                    
+                    $lastMessage = $lastMsg ? htmlspecialchars(substr($lastMsg['tin_nhan'], 0, 30)) . '...' : 'Chưa có tin nhắn nào';
+
                     echo "<div class='friend' data-friend-id='{$row['id']}'>
                         <img src='uploads/avatars/{$row['anh_dai_dien']}' alt='Avatar'>
                         <div class='friend-info'>
@@ -60,8 +112,12 @@ $conn = $db->getConnection();
                             <span class='last-message'>{$lastMessage}</span>
                         </div>
                     </div>";
-                }    
-                ?>
+                }
+            } else {
+                echo "<p class='no-friends'>Không có bạn bè nào.</p>";
+            }
+            ?>
+
             </div>
         </div>
 
@@ -98,7 +154,7 @@ $conn = $db->getConnection();
                 modal.className = 'modal';
                 modal.innerHTML = `
                     <div class="modal-content">
-                    <iframe src="xu-ly/cuoc-goi-di.html?from_id=<?php echo $_SESSION['user_id']; ?>&to_friend_id=${friendId}" 
+                    <iframe src="xu-ly/cuoc-goi-di.php?from_id=<?php echo $_SESSION['user_id']; ?>&to_friend_id=${friendId}" 
                             style="width:100%; height:calc(100% - 60px); border:none; border-radius:8px;">
                     </iframe>
                     <button class="end-call-btn" onclick="closeCallModal()">Kết thúc</button>
@@ -158,7 +214,7 @@ $conn = $db->getConnection();
                 } else {
                 // Nếu modal đã tồn tại, chỉ cập nhật src của iframe với friendId mới
                 let iframe = modal.querySelector('iframe');
-                iframe.src = `xu-ly/cuoc-goi-di.html?from_id=<?php echo $_SESSION['user_id']; ?>&to_friend_id=${friendId}`;
+                iframe.src = `xu-ly/cuoc-goi-di.php?from_id=<?php echo $_SESSION['user_id']; ?>&to_friend_id=${friendId}`;
                 }
                 
                 modal.style.display = 'block';
@@ -167,6 +223,10 @@ $conn = $db->getConnection();
             function closeCallModal() {
                 let modal = document.getElementById('callModal');
                 if (modal) {
+                socket.emit('cakk-ended', {
+                    fromUserId: <?php echo json_encode($_SESSION['user_id']); ?>,
+                    toUserId: <?php echo json_encode($_GET['ban_be_id'] ?? ''); ?>
+                });
                 modal.style.display = 'none';
                 }
             }
@@ -190,11 +250,6 @@ $conn = $db->getConnection();
             socket.on('call-accepted', (data) => {
                 console.log('Call accepted, room:', data.roomID);
                 // Logic chuyển giao cuộc gọi sang WebRTC có thể được thực hiện tại đây nếu cần.
-            });
-
-            socket.on('call-rejected', (data) => {
-                alert('Cuộc gọi bị từ chối');
-                setTimeout(() => closeCallModal(), 2000);
             });
 
             socket.on('connect_error', (error) => {
@@ -266,15 +321,63 @@ $conn = $db->getConnection();
                 modal.className = 'modal';
                 modal.innerHTML = `
                     <div class="modal-content">
-                    <iframe src="./xu-ly/cuoc-goi-den.html?from_friend_id=${callerId}&to_user_id=<?php echo $_SESSION['user_id']; ?>" 
+                    <iframe src="./xu-ly/cuoc-goi-den.php?from_friend_id=${callerId}&to_user_id=<?php echo $_SESSION['user_id']; ?>" 
                             style="width:100%; height:calc(100% - 60px); border:none; border-radius:8px;"></iframe>
                     <button class="end-call-btn" onclick="closeCallModal()">Kết thúc</button>
                     </div>
                 `;
+                const style = document.createElement('style');
+                style.textContent = `
+                    .modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 1000;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 400px;
+                    height: 600px;
+                    background-color: white;
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+                    border-radius: 8px;
+                    padding: 20px;
+                    text-align: center;
+                    }
+                    .modal-content {
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    }
+                    .modal-content iframe {
+                    width: 100%;
+                    height: calc(100% - 60px);
+                    border: none;
+                    border-radius: 8px;
+                    }
+                    .end-call-btn {
+                    position: absolute;
+                    bottom: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 12px 24px;
+                    background: red;
+                    color: white;
+                    border: none;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    border-radius: 6px;
+                    transition: 0.3s;
+                    }
+                    .end-call-btn:hover {
+                    background: darkred;
+                    }
+                `;
+                document.head.appendChild(style);
                 document.body.appendChild(modal);
                 } else {
                 let iframe = modal.querySelector('iframe');
-                iframe.src = `./xu-ly/cuoc-goi-den.html?from_friend_id=${callerId}&to_user_id=<?php echo $_SESSION['user_id']; ?>`;
+                iframe.src = `./xu-ly/cuoc-goi-den.php?from_friend_id=${callerId}&to_user_id=<?php echo $_SESSION['user_id']; ?>`;
                 }
                 modal.style.display = 'block';
             }
@@ -284,10 +387,7 @@ $conn = $db->getConnection();
             socket.on('call-accepted', (data) => {
                 console.log('Call accepted:', data);
             });
-            socket.on('call-rejected', (data) => {
-                console.log('Call rejected:', data);
-                closeCallModal();
-            });
+            
             </script>
             <div class="chat-box" id="chat-box">
             
