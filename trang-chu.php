@@ -18,7 +18,8 @@ try {
         (SELECT COUNT(*) FROM binh_luan WHERE bai_viet_id = bv.id) as so_binh_luan,
         (SELECT chia_se_id FROM bai_viet WHERE id = bv.id) as chia_se_id
         FROM bai_viet bv 
-        JOIN nguoi_dung nd ON bv.nguoi_dung_id = nd.id
+        JOIN nguoi_dung nd ON bv.nguoi_dung_id = nd.id 
+        WHERE bv.trang_thai = 'da_duyet'
         ORDER BY bv.ngay_dang DESC
     ");
     $stmt->execute();
@@ -211,27 +212,35 @@ $loi_moi_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             <div class="col-md-3">
                 <div class="sidebar right-sidebar">
                     <div class="section-title">
-                        <h5>Bạn bè trực tuyến</h5>
-                        <?php
-                        // Lấy danh sách bạn bè trực tuyến
-                        $stmt = $conn->prepare("
-                            SELECT DISTINCT nd.id, nd.ho_ten, nd.anh_dai_dien 
-                            FROM nguoi_dung nd
-                            JOIN ban_be bb ON nd.id = bb.ban_be_id
-                            WHERE bb.nguoi_dung_id = ? AND nd.trang_thai = 'hoat_dong'
-                        ");
-                        $stmt->execute([$_SESSION['user_id']]);
-                        $online_friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    <h5>Bạn bè trực tuyến</h5>
+                    <?php
+                    // Lấy danh sách bạn bè trực tuyến
+                    $stmt = $conn->prepare("
+                        SELECT DISTINCT nd.id, nd.ho_ten, nd.anh_dai_dien 
+                        FROM nguoi_dung nd
+                        JOIN ban_be bb ON (nd.id = bb.ban_be_id OR nd.id = bb.nguoi_dung_id)
+                        WHERE (bb.nguoi_dung_id = ? OR bb.ban_be_id = ?) 
+                        AND nd.trang_thai = 'hoat_dong' 
+                        AND nd.id != ?
+                    ");
 
+                    $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id'], $_SESSION['user_id']]);
+                    $online_friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (!empty($online_friends)) {
                         foreach ($online_friends as $friend):
-                        ?>
+                    ?>
                             <a class="friend" data-friend-id="<?php echo $friend['id']; ?>">
                                 <img src="uploads/avatars/<?php echo $friend['anh_dai_dien']; ?>" alt="Avatar" class="avatar">
                                 <span><?php echo $friend['ho_ten']; ?></span>
                             </a>
-                        <?php
+                    <?php
                         endforeach;
-                        ?>
+                    } else {
+                        echo "<p class='no-friends'>Không có bạn bè nào trực tuyến.</p>";
+                    }
+                    ?>
+
                     </div>
                     <!-- <div class="section-title">
                         <h5>Lời mời kết bạn</h5>

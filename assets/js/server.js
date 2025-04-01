@@ -3,18 +3,16 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors: {
-        origin: "http://localhost", // Adjust this to match your frontend URL
+        origin: "http://localhost", 
         methods: ["GET", "POST"]
     }
 });
-// Store active users and their socket connections
+
 const activeUsers = new Map();
-// Store active calls to prevent duplicate calls
 const activeCalls = new Set();
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
     
-    // Handle user registration
     socket.on('register-user', (userId) => {
         if (activeUsers.has(userId)) {
             // Nếu user đã đăng ký, sử dụng socketId đã có để thực hiện các công việc khác
@@ -71,7 +69,20 @@ io.on('connection', (socket) => {
             }
         });
 
+        
+    // **Xử lý WebRTC Signaling**
+    socket.on('offer', (data) => {
+        io.to(activeUsers.get(data.toUserId)).emit('offer', data);
+    });
 
+    socket.on('answer', (data) => {
+        io.to(activeUsers.get(data.fromUserId)).emit('answer', data);
+    });
+
+    socket.on('ice-candidate', (data) => {
+        io.to(activeUsers.get(data.toUserId)).emit('ice-candidate', data);
+    });
+    
     socket.on('call-ended', (data) => {
         const { fromUserId, toUserId } = data;  
         const callId = `${fromUserId}-${toUserId}`;
@@ -107,8 +118,7 @@ io.on('connection', (socket) => {
             console.log('Room joined:', roomID);
         }
     });
-
-    // Handle call rejection or end
+    // Khi receiver từ chối cuộc gọi
     socket.on('call-rejected', (data) => {
         const { fromUserId, toUserId } = data;
         const callId = `${fromUserId}-${toUserId}`;
@@ -117,10 +127,10 @@ io.on('connection', (socket) => {
 
         console.log('Call rejected:', { fromUserId, toUserId, callId, roomID });
 
-        // Remove call from active calls
         activeCalls.delete(callId);
         console.log('Updated active calls:', Array.from(activeCalls));
 
+        //Xoa cuộc gọi khỏi danh sách activeCalls
         if (fromUserSocketId) {
             socket.leave(roomID);
             io.sockets.sockets.get(fromUserSocketId).leave(roomID);
@@ -133,7 +143,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Handle disconnection
+        //Xu ly khong ket noi duoc
     socket.on('disconnect', () => {
         console.log('User disconnecting:', socket.id);
         for (let [userId, socketId] of activeUsers.entries()) {
@@ -158,6 +168,7 @@ io.on('connection', (socket) => {
         }
     });
 });
+    
 
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {

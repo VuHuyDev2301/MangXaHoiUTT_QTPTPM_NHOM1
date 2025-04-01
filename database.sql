@@ -27,6 +27,7 @@ CREATE TABLE bai_viet (
     FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE,
     FOREIGN KEY (chia_se_id) REFERENCES bai_viet(id) ON DELETE CASCADE
 );
+alter TABLE bai_viet ADD COLUMN trang_thai default 'chua_duyet' AFTER chia_se_id;
 
 -- Bảng bình luận
 CREATE TABLE binh_luan (

@@ -44,3 +44,4 @@ if (isset($_GET['user_id'])) {
         echo "</div></div></div>";
     }
 }
+
