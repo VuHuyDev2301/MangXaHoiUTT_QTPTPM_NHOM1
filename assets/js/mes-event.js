@@ -141,26 +141,24 @@ let currentFriendId = null;
         });
     });
     
-    
-    
-    
-            document.addEventListener('DOMContentLoaded', function() {
-                const messageInput = document.getElementById('message');
-                const plusButton = document.querySelector('.fa-plus-circle');
-                const emojiButton = document.querySelector('.fa-smile');
-                const sendButton = document.querySelector('.fa-paper-plane').parentElement;
 
-                plusButton.addEventListener('click', () => {
-                    // Add attachment functionality here
-                });
-
-                emojiButton.addEventListener('click', () => {
-                    // Add emoji picker functionality here
-                });
-
-                sendButton.addEventListener('click', function() {
-                    messageInput.value = '';
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageInput = document.getElementById('message');
+        const plusButton = document.querySelector('.fa-plus-circle');
+        const emojiButton = document.querySelector('.fa-smile');
+        const sendButton = document.querySelector('.fa-paper-plane').parentElement;
+            sendButton.addEventListener('click', function() {
+                messageInput.value = '';
             });
+    });
             
-            
+    function searchFriend(keyword) {
+        let friends = document.querySelectorAll('.friend');
+        keyword = keyword.toLowerCase();
+        friends.forEach(friend => {
+          let name = friend.querySelector('.friend-name').textContent.toLowerCase();
+          friend.style.display = name.includes(keyword) ? "flex" : "none";
+        });
+    } 
+    
+    
