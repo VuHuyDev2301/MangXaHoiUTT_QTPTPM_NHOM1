@@ -34,39 +34,33 @@ $conn = $db->getConnection();
             <input type="text" id="search_friend" placeholder="Search messages..." oninput="searchFriend(this.value)">
             <i class="fas fa-search"></i>
             </div>
-
-            <div id="searchResults">
+            <div class="friend-list">
                 <?php
-                $userId = $_SESSION['user_id'];
-
-                // Truy vấn danh sách bạn bè có tin nhắn gần nhất
-                $stmt = $conn->prepare("
-                    SELECT nd.id, nd.ho_ten, nd.anh_dai_dien, 
-                        (SELECT tin_nhan FROM ban_be 
-                            WHERE (nguoi_dung_id = nd.id AND ban_be_id = :user_id) 
-                            OR (ban_be_id = nd.id AND nguoi_dung_id = :user_id) 
-                            ORDER BY thoi_gian DESC LIMIT 1) AS lastMessage
-                    FROM nguoi_dung nd
-                    ORDER BY nd.ho_ten ASC
-                ");
-
-                $stmt->execute(['user_id' => $userId]);
-                $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                if ($friends) {
-                    foreach ($friends as $row) {
-                        $lastMessage = $row['lastMessage'] ? htmlspecialchars($row['lastMessage']) : "Không có tin nhắn";
-                        echo "<div class='friend' data-friend-id='{$row['id']}'>
-                                <img src='uploads/avatars/{$row['anh_dai_dien']}' alt='Avatar'>
-                                <div class='friend-info'>
-                                    <span class='friend-name'>{$row['ho_ten']}</span>
-                                    <span class='last-message'>{$lastMessage}</span>
-                                </div>
-                            </div>";
-                    }
-                } else {
-                    echo "<p>Không tìm thấy bạn bè nào.</p>";
-                }
+                $stmt = $conn->prepare("SELECT * FROM nguoi_dung WHERE id != :user_id");
+                $stmt->execute(['user_id' => $_SESSION['user_id']]);
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $lastMsgStmt = $conn->prepare(
+                        "SELECT tin_nhan 
+                        FROM ban_be
+                        WHERE (nguoi_dung_id = :user_id AND ban_be_id = :friend_id)
+                        OR (ban_be_id = :friend_id AND nguoi_dung_id = :user_id)
+                        ORDER BY id DESC"
+                    );
+                    $lastMsgStmt->execute([
+                        'user_id' => $_SESSION['user_id'],
+                        'friend_id' => $row['id']
+                    ]);
+                    $lastMsg = $lastMsgStmt->fetch();
+                    $lastMessage = $lastMsg ? htmlspecialchars(substr($lastMsg['tin_nhan'], 0, 30)) . '...' : 'No messages yet';
+                    
+                    echo "<div class='friend' data-friend-id='{$row['id']}'>
+                        <img src='uploads/avatars/{$row['anh_dai_dien']}' alt='Avatar'>
+                        <div class='friend-info'>
+                            <span class='friend-name'>{$row['ho_ten']}</span>
+                            <span class='last-message'>{$lastMessage}</span>
+                        </div>
+                    </div>";
+                }    
                 ?>
             </div>
 
@@ -272,11 +266,6 @@ $conn = $db->getConnection();
             function closeCallModal() {
                 let modal = document.getElementById('callModal');
                 if (modal) {
-                socket.emit('call-ended', {
-                    fromUserId: <?php echo json_encode($_SESSION['user_id']); ?>,
-                    toUserId: <?php echo json_encode($_GET['ban_be_id'] ?? ''); ?>
-                    // roomID: modal.querySelector('iframe').src.split('=')[2] // Lấy roomID từ src của iframe
-                });
                 modal.style.display = 'none';
                 }
             }
@@ -294,6 +283,16 @@ $conn = $db->getConnection();
             
             socket.on('call-failed', (data) => {
                 alert('Cuộc gọi thất bại: ' + data.message);
+                setTimeout(() => closeCallModal(), 2000);
+            });
+
+            socket.on('call-accepted', (data) => {
+                console.log('Call accepted, room:', data.roomID);
+                // Logic chuyển giao cuộc gọi sang WebRTC có thể được thực hiện tại đây nếu cần.
+            });
+
+            socket.on('call-rejected', (data) => {
+                alert('Cuộc gọi bị từ chối');
                 setTimeout(() => closeCallModal(), 2000);
             });
 
@@ -483,16 +482,15 @@ $conn = $db->getConnection();
                 modal.style.display = 'block';
             }
 
-            // socket.on('call-rejected', (data) => {
-            //     alert('Cuộc gọi đã bị từ chối');
-            //     closeCallModal();
-            // });
-            
-            // socket.on('call-accepted', (data) => {
-            //     alert('Cuộc gọi đã được chấp nhận');
-            //     console.log('Call accepted:', data);
-            // });
-            
+
+            // Xử lý các sự kiện khác từ server nếu cần
+            socket.on('call-accepted', (data) => {
+                console.log('Call accepted:', data);
+            });
+            socket.on('call-rejected', (data) => {
+                console.log('Call rejected:', data);
+                closeCallModal();
+            });
             </script>
             <div class="chat-box" id="chat-box">
             
